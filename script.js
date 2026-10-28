@@ -1,511 +1,509 @@
 // PENALTY MIND GAMES
-// One JavaScript file with four clearly separated parts.
+// Classroom version: HTML + CSS + JavaScript + p5.js + Adafruit IO
 
-// ============================================================================
-// ======================= PART 1 / 4 : TEAMS & PAGES ========================
-// ============================================================================
-// Club names, team crests, team selection, and page navigation.
+// =============================================================
+// PART 1 / 4 : TEAM SELECTION AND PAGES
+// =============================================================
 
+// ESPN team crest IDs. The logos are loaded from the web.
 const clubs = {
-    'Liverpool': 364,
-    'Arsenal': 359,
-    'Tottenham': 367,
-    'Manchester United': 360,
-    'Manchester City': 382,
-    'Chelsea': 363,
-    'Newcastle United': 361,
-    'Real Madrid': 86,
-    'Barcelona': 83,
-    'Bayern Munich': 132,
-    'PSG': 160,
-    'Inter Milan': 110,
-    'AC Milan': 103,
-    'Juventus': 111,
-    'Borussia Dortmund': 124
+    "Liverpool": 364,
+    "Arsenal": 359,
+    "Tottenham": 367,
+    "Manchester United": 360,
+    "Manchester City": 382,
+    "Chelsea": 363,
+    "Newcastle United": 361,
+    "Real Madrid": 86,
+    "Barcelona": 83,
+    "Bayern Munich": 132,
+    "PSG": 160,
+    "Inter Milan": 110,
+    "AC Milan": 103,
+    "Juventus": 111,
+    "Borussia Dortmund": 124
 };
 
-const clubNames = Object.keys(clubs);
 
-let teamA = 'Liverpool';
-let teamB = 'Arsenal';
+let teamA = "Liverpool";
+let teamB = "Arsenal";
 
-// Short helper: find an HTML element by its id.
-function get(id) {
-    return document.querySelector('#' + id);
+// Find an element in the HTML, just like in our DWW exercises.
+function byId(id) {
+    return document.querySelector("#" + id);
 }
 
-// --- Switching between the three pages ---
+function showPage(page) {
+    byId("homePage").classList.add("hidden");
+    byId("gamePage").classList.add("hidden");
+    byId("leaguePage").classList.add("hidden");
+    byId(page).classList.remove("hidden");
+}
 
-function showPage(pageId) {
-    get('startPage').classList.add('hidden');
-    get('matchPage').classList.add('hidden');
-    get('leaguePage').classList.add('hidden');
+// Display the chosen club crest directly from ESPN.
+function showCrest(id, team) {
+    let container = byId(id);
+    container.innerHTML = "";
 
-    get(pageId).classList.remove('hidden');
+    let image = document.createElement("img");
+    image.src = "https://a.espncdn.com/i/teamlogos/soccer/500/" + clubs[team] + ".png";
+    image.alt = team + " crest";
+    image.title = team;
 
-    if (pageId === 'leaguePage') {
-        showLeague();
+    container.appendChild(image);
+}
+
+function prepareTeams() {
+    let listA = byId("teamA");
+    let listB = byId("teamB");
+
+    for (let name in clubs) {
+        listA.add(new Option(name, name));
+        listB.add(new Option(name, name));
     }
 
-    window.scrollTo(0, 0);
+    listA.value = teamA;
+    listB.value = teamB;
+
+    listA.addEventListener("change", updateTeams);
+    listB.addEventListener("change", updateTeams);
+    listA.addEventListener("input", updateTeams);
+    listB.addEventListener("input", updateTeams);
+    updateTeams();
 }
 
-// --- Club crests and team selection ---
+function updateTeams() {
+    showCrest("crestA", byId("teamA").value);
+    showCrest("crestB", byId("teamB").value);
 
-function makeBadge(name) {
-    const badge = document.createElement('span');
-    badge.className = 'club-badge';
-
-    const initials = document.createElement('span');
-    initials.className = 'initials';
-    initials.textContent = name.slice(0, 3).toUpperCase();
-    badge.appendChild(initials);
-
-    // If the logo is unavailable, the initials remain visible.
-    if (clubs[name]) {
-        const image = document.createElement('img');
-        image.src = 'https://a.espncdn.com/i/teamlogos/soccer/500/' + clubs[name] + '.png';
-        image.alt = name + ' crest';
-        image.onload = function () {
-            badge.classList.add('loaded');
-        };
-        badge.appendChild(image);
+    // A clear warning appears only if both players select the same club.
+    if (byId("teamA").value === byId("teamB").value) {
+        byId("teamMessage").textContent = "Please choose two different teams.";
+    } else {
+        byId("teamMessage").textContent = "";
     }
-
-    return badge;
-}
-
-function updateTeamPicker(player) {
-    const select = get('team' + player);
-    const custom = get('custom' + player);
-    const chosenBadge = get('chosenBadge' + player);
-
-    custom.classList.toggle('hidden', select.value !== 'Custom team');
-
-    const name = select.value === 'Custom team' ? custom.value.trim() : select.value;
-    chosenBadge.replaceChildren(makeBadge(name || 'Custom'));
-
-    const buttons = get('badges' + player).querySelectorAll('button');
-    buttons.forEach(function (button) {
-        button.classList.toggle('selected', button.title === select.value);
-    });
-}
-
-function setupTeamPicker(player) {
-    const select = get('team' + player);
-    const badgeGrid = get('badges' + player);
-
-    clubNames.forEach(function (name) {
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        select.appendChild(option);
-
-        const button = document.createElement('button');
-        button.className = 'badge-choice';
-        button.title = name;
-        button.setAttribute('aria-label', 'Choose ' + name);
-        button.appendChild(makeBadge(name));
-
-        button.addEventListener('click', function () {
-            select.value = name;
-            updateTeamPicker(player);
-        });
-
-        badgeGrid.appendChild(button);
-    });
-
-    const customOption = document.createElement('option');
-    customOption.value = 'Custom team';
-    customOption.textContent = 'Custom team';
-    select.appendChild(customOption);
-
-    select.value = player === 'A' ? 'Liverpool' : 'Arsenal';
-    select.addEventListener('change', function () {
-        updateTeamPicker(player);
-    });
-
-    get('custom' + player).addEventListener('input', function () {
-        updateTeamPicker(player);
-    });
-
-    updateTeamPicker(player);
-}
-
-function selectedName(player) {
-    const select = get('team' + player);
-    let value = select.value;
-
-    if (value === 'Custom team') {
-        value = get('custom' + player).value;
-    }
-
-    return value.trim().replace(/\s+/g, ' ').slice(0, 28);
 }
 
 function startMatch() {
-    const a = selectedName('A');
-    const b = selectedName('B');
+    teamA = byId("teamA").value;
+    teamB = byId("teamB").value;
 
-    if (!a || !b || a.toLowerCase() === b.toLowerCase()) {
-        get('teamMessage').textContent = 'Please choose two different team names.';
+    if (teamA === teamB) {
+        byId("teamMessage").textContent = "Choose two different teams.";
         return;
     }
 
-    teamA = a;
-    teamB = b;
+    byId("teamMessage").textContent = "";
+    byId("nameA").textContent = teamA;
+    byId("nameB").textContent = teamB;
+    showCrest("matchCrestA", teamA);
+    showCrest("matchCrestB", teamB);
 
-    get('matchNameA').textContent = teamA;
-    get('matchNameB').textContent = teamB;
-    get('matchBadgeA').replaceChildren(makeBadge(teamA));
-    get('matchBadgeB').replaceChildren(makeBadge(teamB));
-
-    resetMatch();
-    showPage('matchPage');
-
-    // Short introduction before the shootout begins.
-    get('introA').textContent = teamA;
-    get('introB').textContent = teamB;
-    get('intro').classList.remove('hidden');
-    setTimeout(function () {
-        get('intro').classList.add('hidden');
-    }, 1600);
+    showPage("gamePage");
+    resetGame();
 }
 
+byId("startButton").addEventListener("click", startMatch);
+byId("backButton").addEventListener("click", function () {
+    showPage("homePage");
+});
+byId("restartButton").addEventListener("click", startMatch);
+byId("standingsButton").addEventListener("click", function () {
+    showLeague();
+    showPage("leaguePage");
+});
+byId("leagueBackButton").addEventListener("click", function () {
+    showPage("gamePage");
+});
 
-// ============================================================================
-// ======================= PART 2 / 4 : GAME & SOUND ========================
-// ============================================================================
-// Penalty shots, goalkeeper saves, score, animations, and SIUUU sound.
+prepareTeams();
 
-const shotLimit = 10;
 
-let goals = [0, 0];
-let shots = 0;
+// =============================================================
+// PART 2 / 4 : PENALTY GAME WITH p5.js
+// =============================================================
+
+let aim = 90;
+let power = 60;
+let move = 50;
+let angle = 0;
+
+let scores = [0, 0];
+let shotCount = 0;
 let shooting = false;
-let matchSaved = false;
-let shotVersion = 0;
-let jumpedRecently = false;
-let jumpedDuringShot = false;
-let jumpPosition = 50;
-let jumpAngle = 0;
-let jumpTime = 0;
-let soundEnabled = true;
+let shotFrame = 0;
+let currentShot = null;
+let lastJump = null;
+let messageTime = 0;
 
-// The four values represent the Arduino potentiometers.
-let controls = {
-    aim: 90,
-    power: 50,
-    move: 50,
-    angle: 0
-};
-
-// --- Match logic ---
-
-function updateControls() {
-    controls.aim = Number(get('aim').value);
-    controls.power = Number(get('power').value);
-    controls.move = Number(get('move').value);
-    controls.angle = Number(get('angle').value);
-
-    get('aimValue').textContent = controls.aim + '°';
-    get('powerValue').textContent = controls.power + '%';
-    get('moveValue').textContent = controls.move + '%';
-    get('angleValue').textContent = controls.angle + '°';
-
-    // The goalkeeper stays inside the goal area.
-    get('keeper').style.left = controls.move + '%';
-}
-
-function resetBall() {
-    const ball = get('ball');
-    ball.style.transition = 'none';
-    ball.style.left = '50%';
-    ball.style.bottom = '7%';
-    ball.classList.remove('kicked');
-
-    // Allow the next kick to use the CSS transition again.
-    void ball.offsetWidth;
-    ball.style.transition = '';
-}
-
-function resetMatch() {
-    // Ignore any unfinished shot from the previous match.
-    shotVersion++;
-    goals = [0, 0];
-    shots = 0;
+function resetGame() {
+    scores = [0, 0];
+    shotCount = 0;
     shooting = false;
-    matchSaved = false;
-    jumpedRecently = false;
-    jumpedDuringShot = false;
+    currentShot = null;
+    lastJump = null;
+    messageTime = 0;
 
-    get('goalEffect').classList.add('hidden');
-    get('standingsResultBtn').classList.add('hidden');
-    get('shotHistory').textContent = 'Five penalties per team.';
-    get('resultTitle').textContent = 'READY FOR KICKOFF';
-    get('resultDetail').textContent = 'Use the controls to aim, then press SHOOT.';
-
-    resetBall();
-    updateScore();
+    byId("score").textContent = "0 - 0";
+    byId("shotNumber").textContent = "Penalty 1 / 10";
+    byId("resultText").textContent = "Ready to shoot";
+    byId("shootData").textContent = "READY";
+    byId("jumpData").textContent = "READY";
+    byId("restartButton").classList.add("hidden");
 }
 
-function updateScore() {
-    get('scoreA').textContent = goals[0];
-    get('scoreB').textContent = goals[1];
-    get('shotCount').textContent = 'SHOT ' + shots + ' / ' + shotLimit;
+// p5.js calls setup() only once.
+function setup() {
+    let canvas = createCanvas(750, 430);
+    canvas.parent("pitch");
+    textFont("Arial");
+}
 
-    if (shots === shotLimit) {
-        get('turnText').textContent = 'FULL TIME';
-    } else {
-        get('turnText').textContent = 'NEXT: ' + (shots % 2 === 0 ? teamA : teamB);
+// p5.js calls draw() again and again to animate the ball.
+function draw() {
+    background("#155a37");
+
+    // Grass stripes
+    noStroke();
+    fill("#1b6841");
+    rect(0, 0, 750, 95);
+    rect(0, 190, 750, 95);
+    rect(0, 380, 750, 50);
+
+    // Goal and net
+    stroke(255);
+    strokeWeight(4);
+    noFill();
+    rect(175, 65, 400, 160);
+
+    stroke(255, 255, 255, 75);
+    strokeWeight(1);
+    for (let x = 195; x < 575; x += 25) {
+        line(x, 65, x, 225);
     }
+    for (let y = 90; y < 225; y += 25) {
+        line(175, y, 575, y);
+    }
+
+    // Show the predicted ball path before the shot.
+    // Both the guide and the actual shot use the same target position.
+    if (!shooting && shotCount < 10) {
+        let target = getShotTarget(aim, power);
+        drawShotGuide(target.x, target.y);
+    }
+
+    // Move sets the horizontal position. Angle sets the jump height.
+    let keeperX = map(move, 0, 100, 180, 570);
+    let keeperY = 190;
+
+    if (lastJump) {
+        let elapsed = Date.now() - lastJump.time;
+        let lift = 0;
+
+        // Rise quickly, stay up briefly, then return to the ground.
+        if (elapsed < 250) {
+            lift = lastJump.height * elapsed / 250;
+        } else if (elapsed < 900) {
+            lift = lastJump.height;
+        } else if (elapsed < 1200) {
+            lift = lastJump.height * (1200 - elapsed) / 300;
+        } else {
+            lastJump = null;
+        }
+
+        if (lastJump) {
+            keeperX = lastJump.x;
+            keeperY = keeperY - lift;
+        }
+    }
+
+    drawKeeper(keeperX, keeperY);
+
+    let ballX = 375;
+    let ballY = 350;
+
+    if (shooting) {
+        shotFrame++;
+        // More power means fewer frames, so the ball travels faster.
+        let progress = min(shotFrame / currentShot.frames, 1);
+
+        ballX = lerp(375, currentShot.x, progress);
+        ballY = lerp(350, currentShot.y, progress);
+        ballY = ballY - sin(progress * PI) * 45;
+
+        // A save happens whenever the moving ball touches the keeper.
+        // No jump is required: the keeper can also save while standing.
+        if (ballTouchesKeeper(ballX, ballY, keeperX, keeperY)) {
+            currentShot.saved = true;
+        }
+
+        if (progress === 1) {
+            finishShot();
+        }
+    }
+
+    drawBall(ballX, ballY);
+
+    // Goal message appears briefly on the pitch.
+    if (Date.now() < messageTime) {
+        fill("#f6ff89");
+        noStroke();
+        textAlign(CENTER);
+        textSize(45);
+        text(byId("resultText").textContent, 375, 55);
+    }
+}
+
+// Aim controls left/right; power controls the height of the landing point.
+// The goal is from x = 175 to 575 and y = 65 to 225.
+function getShotTarget(shotAim, shotPower) {
+    return {
+        x: 135 + shotAim * 480 / 180,
+        y: 255 - shotPower * 210 / 100
+    };
+}
+
+// Draw a dashed line and a crosshair to show the expected landing point.
+function drawShotGuide(targetX, targetY) {
+    let onTarget = targetX >= 175 && targetX <= 575;
+    onTarget = onTarget && targetY >= 65 && targetY <= 225;
+
+    let guideColor = onTarget ? "#f5e96a" : "#ff987c";
+    stroke(guideColor);
+    strokeWeight(3);
+
+    // Dashed trajectory from the football to the goal.
+    for (let i = 0; i < 20; i += 2) {
+        let start = i / 20;
+        let end = (i + 1) / 20;
+
+        // Use the same arc as the moving ball.
+        line(
+            lerp(375, targetX, start),
+            lerp(350, targetY, start) - sin(start * PI) * 45,
+            lerp(375, targetX, end),
+            lerp(350, targetY, end) - sin(end * PI) * 45
+        );
+    }
+
+    // Crosshair / projected landing point.
+    noFill();
+    strokeWeight(3);
+    circle(targetX, targetY, 34);
+    line(targetX - 25, targetY, targetX - 10, targetY);
+    line(targetX + 10, targetY, targetX + 25, targetY);
+    line(targetX, targetY - 25, targetX, targetY - 10);
+    line(targetX, targetY + 10, targetX, targetY + 25);
+
+    noStroke();
+    fill(guideColor);
+    circle(targetX, targetY, 7);
+}
+
+function drawKeeper(x, y) {
+    // Head
+    noStroke();
+    fill("#e7bb8c");
+    circle(x, y - 40, 28);
+
+    // Shirt
+    fill("#f2aa27");
+    rect(x - 18, y - 25, 36, 42, 7);
+
+    // Arms and legs
+    stroke("#f2aa27");
+    strokeWeight(9);
+    line(x - 14, y - 12, x - 43, y + 2);
+    line(x + 14, y - 12, x + 43, y + 2);
+
+    stroke("#162d20");
+    line(x - 8, y + 17, x - 15, y + 46);
+    line(x + 8, y + 17, x + 15, y + 46);
+}
+
+function drawBall(x, y) {
+    stroke("#222222");
+    strokeWeight(2);
+    fill(255);
+    circle(x, y, 27);
+    fill("#222222");
+    circle(x, y, 10);
+}
+
+// Check if the football touches the drawn goalkeeper.
+// The ball has a radius of 13.5 pixels (diameter 27).
+function ballTouchesKeeper(ballX, ballY, keeperX, keeperY) {
+    let ballRadius = 13.5;
+
+    // Head: two circles touch when their centers are close enough.
+    let headDistance = Math.hypot(ballX - keeperX, ballY - (keeperY - 40));
+    if (headDistance <= ballRadius + 14) {
+        return true;
+    }
+
+    // Body: find the closest point on the goalkeeper's shirt rectangle.
+    let nearestX = Math.max(keeperX - 18, Math.min(ballX, keeperX + 18));
+    let nearestY = Math.max(keeperY - 25, Math.min(ballY, keeperY + 17));
+    if (Math.hypot(ballX - nearestX, ballY - nearestY) <= ballRadius) {
+        return true;
+    }
+
+    // Arms and legs: check the distance from the ball to each line segment.
+    function touchesLimb(x1, y1, x2, y2) {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let progress = ((ballX - x1) * dx + (ballY - y1) * dy) / (dx * dx + dy * dy);
+
+        progress = Math.max(0, Math.min(1, progress));
+
+        let nearX = x1 + dx * progress;
+        let nearY = y1 + dy * progress;
+
+        // Limbs are 9 pixels wide in drawKeeper().
+        return Math.hypot(ballX - nearX, ballY - nearY) <= ballRadius + 4.5;
+    }
+
+    return touchesLimb(keeperX - 14, keeperY - 12, keeperX - 43, keeperY + 2) ||
+        touchesLimb(keeperX + 14, keeperY - 12, keeperX + 43, keeperY + 2) ||
+        touchesLimb(keeperX - 8, keeperY + 17, keeperX - 15, keeperY + 46) ||
+        touchesLimb(keeperX + 8, keeperY + 17, keeperX + 15, keeperY + 46);
 }
 
 function jump() {
-    if (shots === shotLimit && !shooting) {
+    if (shotCount === 10) {
         return;
     }
 
-    jumpTime = Date.now();
-    jumpedRecently = true;
-    jumpPosition = controls.move;
-    jumpAngle = controls.angle;
+    // Move selects left/right; Angle selects low or high dive.
+    // Angle -90 = stay low, +90 = reach the top corners.
+    let x = map(move, 0, 100, 180, 570);
+    let height = map(angle, -90, 90, 0, 125);
 
-    if (shooting) {
-        jumpedDuringShot = true;
-    }
+    lastJump = {
+        x: x,
+        height: height,
+        time: Date.now()
+    };
 
-    const keeper = get('keeper');
-    keeper.style.setProperty('--dive', controls.angle / 3 + 'deg');
-    keeper.classList.add('jumping');
-
-    setTimeout(function () {
-        keeper.classList.remove('jumping');
-        jumpedRecently = false;
-    }, 650);
+    byId("jumpData").textContent = "JUMP!";
 }
 
 function shoot() {
-    if (shooting || shots >= shotLimit) {
+    if (shooting || shotCount === 10 || byId("gamePage").classList.contains("hidden")) {
         return;
     }
 
     shooting = true;
-    shotVersion++;
-    const thisShot = shotVersion;
-    const shooter = shots % 2;
-    const shotAim = controls.aim;
-    const shotPower = controls.power;
+    shotFrame = 0;
 
-    // A goalkeeper who jumped just before the shot can still make a save.
-    jumpedDuringShot = jumpedRecently && Date.now() - jumpTime < 350;
+    let target = getShotTarget(aim, power);
 
-    get('resultTitle').textContent = 'SHOT IN PROGRESS...';
-    get('resultDetail').textContent = (shooter === 0 ? teamA : teamB) + ' takes the penalty.';
-    get('goalEffect').classList.add('hidden');
+    currentShot = {
+        x: target.x,
+        y: target.y,
+        aim: aim,
+        power: power,
+        // Power 0: 62 frames; Power 100: 22 frames.
+        frames: Math.round(62 - power * 0.4),
+        time: Date.now(),
+        saved: false
+    };
 
-    resetBall();
-    const ball = get('ball');
-
-    // Aim determines horizontal position; power determines height.
-    setTimeout(function () {
-        ball.classList.add('kicked');
-        ball.style.left = (5 + shotAim / 180 * 90) + '%';
-        ball.style.bottom = (32 + shotPower / 100 * 55) + '%';
-    }, 25);
-
-    // Wait for the animation, then decide if it was a goal or save.
-    setTimeout(function () {
-        if (thisShot === shotVersion) {
-            finishShot(shooter, shotAim, shotPower);
-        }
-    }, 800);
+    byId("shootData").textContent = "SHOOT!";
+    byId("resultText").textContent = "Shooting...";
 }
 
-function finishShot(shooter, aim, power) {
-    // 1. Extreme angles / power miss the target.
-    const badAim = aim < 28 || aim > 152;
-    const badPower = power < 20 || power > 92;
-    const missed = badAim || badPower;
+function finishShot() {
+    shooting = false;
+    shotCount++;
 
-    // 2. The keeper can save if they jumped toward the ball in time.
-    const shotX = 5 + aim / 180 * 90;
-    const keeperX = 19 + jumpPosition / 100 * 62;
-    const difference = shotX - keeperX;
-    const keeperIsClose = Math.abs(difference) < 7;
-    const keeperDivesLeft = difference < 0 && jumpAngle < -15;
-    const keeperDivesRight = difference > 0 && jumpAngle > 15;
-    const diveMatches = keeperIsClose || keeperDivesLeft || keeperDivesRight;
+    // A miss happens when the landing point is outside the goal.
+    let missed = currentShot.x < 175 || currentShot.x > 575;
+    missed = missed || currentShot.y < 65 || currentShot.y > 225;
 
-    const saved = !missed &&
-        jumpedDuringShot &&
-        Math.abs(difference) < 18 &&
-        diveMatches;
+    // A save is recorded only when the ball actually touches the keeper.
+    let saved = currentShot.saved;
 
-    let result = 'GOAL';
-
-    if (missed) {
-        result = 'MISS';
-    } else if (saved) {
-        result = 'SAVE';
+    if (saved) {
+        // Contact always counts as a save, even if the ball was headed wide.
+        byId("resultText").textContent = "SAVED!";
+    } else if (missed) {
+        byId("resultText").textContent = "MISS!";
     } else {
-        goals[shooter]++;
-        playSiu();
+        // Teams take turns: A, B, A, B...
+        let player = (shotCount - 1) % 2;
+        scores[player]++;
+        byId("resultText").textContent = "GOAL! SIUUUU!";
+        playGoalSound();
     }
 
-    shots++;
-    jumpedDuringShot = false;
+    messageTime = Date.now() + 1300;
+    byId("score").textContent = scores[0] + " - " + scores[1];
+    byId("shootData").textContent = "READY";
+    byId("jumpData").textContent = "READY";
+    lastJump = null;
 
-    get('resultTitle').textContent = result + '!';
-    if (result === 'GOAL') {
-        get('resultDetail').textContent = 'What a finish! SIUUUUUU!';
-    } else if (result === 'SAVE') {
-        get('resultDetail').textContent = 'The goalkeeper stops it!';
+    if (shotCount < 10) {
+        byId("shotNumber").textContent = "Penalty " + (shotCount + 1) + " / 10";
     } else {
-        get('resultDetail').textContent = 'The ball missed the target.';
+        byId("shotNumber").textContent = "FULL TIME";
+        byId("restartButton").classList.remove("hidden");
+        saveMatch();
     }
-
-    get('shotHistory').textContent = (shooter === 0 ? teamA : teamB) +
-        ' · ' + result + ' · Score: ' + goals[0] + ' - ' + goals[1];
-
-    if (result === 'GOAL') {
-        const effect = get('goalEffect');
-        effect.classList.remove('hidden');
-        setTimeout(function () {
-            effect.classList.add('hidden');
-        }, 1350);
-    }
-
-    updateScore();
-
-    if (shots === shotLimit) {
-        finishMatch();
-    }
-
-    // Reset the ball before another shot can begin.
-    const thisShot = shotVersion;
-    setTimeout(function () {
-        if (thisShot !== shotVersion) {
-            return;
-        }
-        resetBall();
-        shooting = false;
-    }, 550);
 }
 
-// --- Goal celebration sound ---
+// Play the provided goal sound file. No synthetic voice fallback.
+function playGoalSound() {
+    let audio = new Audio("assets/siuuu.mp3");
 
-// You can also replace this URL with a local file: assets/siuuu.mp3
-const siuAudio = new Audio(
-    'https://tiengdong.com/wp-content/uploads/am-thanh-siuuu-www_tiengdong_com.mp3'
-);
-
-function playSiu() {
-    if (!soundEnabled) {
-        return;
-    }
-
-    siuAudio.pause();
-    siuAudio.currentTime = 0;
-
-    // Use speech as a fallback if the external sound is unavailable.
-    siuAudio.play().catch(function () {
-        if ('speechSynthesis' in window) {
-            const voice = new SpeechSynthesisUtterance('Siuuuuu!');
-            voice.lang = 'en-US';
-            voice.rate = 0.75;
-            window.speechSynthesis.speak(voice);
-        }
+    audio.play().catch(function () {
+        console.log("Goal sound not available: add assets/siuuu.mp3.");
     });
 }
 
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    get('soundBtn').textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
 
-    if (!soundEnabled) {
-        siuAudio.pause();
-        if ('speechSynthesis' in window) {
-            speechSynthesis.cancel();
-        }
-    }
-}
+// =============================================================
+// PART 3 / 4 : LEAGUE TABLE
+// =============================================================
 
+let matches = [];
 
-// ============================================================================
-// ======================= PART 3 / 4 : LEAGUE TABLE ========================
-// ============================================================================
-// Save match results, calculate points, and export the standings.
-
-const saveKey = 'penaltyMindGames:standings:v3';
-
-let results = [];
-
-// Remember previously played matches (if any).
 try {
-    const oldData = JSON.parse(localStorage.getItem(saveKey));
-    if (oldData && Array.isArray(oldData.matches)) {
-        results = oldData.matches;
-    }
+    matches = JSON.parse(localStorage.getItem("penaltyMatches")) || [];
 } catch (error) {
-    results = [];
+    matches = [];
 }
 
-// --- Results and standings ---
-
-function finishMatch() {
-    let winner = 'Draw';
-
-    if (goals[0] > goals[1]) {
-        winner = teamA + ' wins!';
-    } else if (goals[1] > goals[0]) {
-        winner = teamB + ' wins!';
-    }
-
-    get('resultTitle').textContent = 'FULL TIME · ' + winner;
-    get('standingsResultBtn').classList.remove('hidden');
-
-    if (matchSaved) {
-        return;
-    }
-    matchSaved = true;
-
-    results.push({
-        a: teamA,
-        b: teamB,
-        goalsA: goals[0],
-        goalsB: goals[1],
-        date: new Date().toISOString()
+function saveMatch() {
+    matches.push({
+        teamA: teamA,
+        teamB: teamB,
+        goalsA: scores[0],
+        goalsB: scores[1]
     });
 
     try {
-        localStorage.setItem(saveKey, JSON.stringify({ matches: results }));
+        localStorage.setItem("penaltyMatches", JSON.stringify(matches));
     } catch (error) {
-        get('resultDetail').textContent = 'Match ended. Browser storage is unavailable.';
+        console.log("Could not save the league table.");
     }
 }
 
-function calculateTable() {
-    const table = {};
+function showLeague() {
+    let table = {};
 
-    results.forEach(function (match) {
-        [match.a, match.b].forEach(function (name) {
-            if (!table[name]) {
-                table[name] = {
-                    name: name,
-                    p: 0,
-                    w: 0,
-                    d: 0,
-                    l: 0,
-                    gf: 0,
-                    ga: 0,
-                    pts: 0
-                };
-            }
-        });
+    function addTeam(name) {
+        if (!table[name]) {
+            table[name] = { name: name, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+        }
+    }
 
-        const a = table[match.a];
-        const b = table[match.b];
+    matches.forEach(function (match) {
+        addTeam(match.teamA);
+        addTeam(match.teamB);
+
+        let a = table[match.teamA];
+        let b = table[match.teamB];
 
         a.p++;
         b.p++;
@@ -518,7 +516,7 @@ function calculateTable() {
             a.w++;
             a.pts += 3;
             b.l++;
-        } else if (match.goalsB > match.goalsA) {
+        } else if (match.goalsA < match.goalsB) {
             b.w++;
             b.pts += 3;
             a.l++;
@@ -530,285 +528,203 @@ function calculateTable() {
         }
     });
 
-    return Object.values(table).sort(function (a, b) {
-        return b.pts - a.pts ||
-            (b.gf - b.ga) - (a.gf - a.ga) ||
-            b.gf - a.gf;
+    let teams = Object.values(table);
+
+    teams.sort(function (a, b) {
+        return b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga);
     });
-}
 
-function showLeague() {
-    const teams = calculateTable();
-    const rows = get('leagueRows');
-    rows.replaceChildren();
+    byId("leagueBody").innerHTML = "";
 
-    get('clubTotal').textContent = teams.length;
-    get('matchTotal').textContent = results.length;
-    get('goalTotal').textContent = results.reduce(function (sum, match) {
-        return sum + match.goalsA + match.goalsB;
-    }, 0);
+    teams.forEach(function (team) {
+        let row = document.createElement("tr");
+        let values = [team.name, team.p, team.w, team.d, team.l,
+                      team.gf - team.ga, team.pts];
 
-    teams.forEach(function (team, index) {
-        const row = document.createElement('tr');
-        const values = [
-            index + 1,
-            team.name,
-            team.p,
-            team.w,
-            team.d,
-            team.l,
-            team.gf,
-            team.ga,
-            team.gf - team.ga,
-            team.pts
-        ];
-
-        values.forEach(function (value, i) {
-            const cell = document.createElement('td');
-
-            if (i === 1) {
-                const club = document.createElement('div');
-                club.className = 'club-cell';
-                const image = document.createElement('span');
-                image.className = 'table-badge';
-                image.appendChild(makeBadge(team.name));
-                club.appendChild(image);
-                club.appendChild(document.createTextNode(team.name));
-                cell.appendChild(club);
-            } else {
-                cell.textContent = value;
-            }
-
+        values.forEach(function (value) {
+            let cell = document.createElement("td");
+            cell.textContent = value;
             row.appendChild(cell);
         });
 
-        rows.appendChild(row);
+        byId("leagueBody").appendChild(row);
     });
 
-    const history = get('recentMatches');
-    history.replaceChildren();
-
-    results.slice(-10).reverse().forEach(function (match) {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-
-        const badgeA = document.createElement('span');
-        badgeA.className = 'table-badge';
-        badgeA.appendChild(makeBadge(match.a));
-
-        const badgeB = document.createElement('span');
-        badgeB.className = 'table-badge';
-        badgeB.appendChild(makeBadge(match.b));
-
-        const score = match.a + ' ' + match.goalsA +
-            ' - ' + match.goalsB + ' ' + match.b;
-
-        item.append(badgeA, score, badgeB);
-        history.appendChild(item);
-    });
-
-    if (results.length === 0) {
-        history.textContent = 'No matches played yet.';
+    if (teams.length === 0) {
+        byId("leagueBody").innerHTML = "<tr><td colspan='7'>No matches yet.</td></tr>";
     }
 }
 
-function downloadCSV() {
-    const header = 'Club,Played,Wins,Draws,Losses,GF,GA,Points';
-    const lines = calculateTable().map(function (team) {
-        const name = '"' + team.name.replace(/"/g, '""') + '"';
-        return [name, team.p, team.w, team.d, team.l, team.gf, team.ga, team.pts].join(',');
-    });
 
-    const csv = [header, ...lines].join('\n');
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    link.download = 'penalty-league.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
+// =============================================================
+// PART 4 / 4 : ESP32 + ADAFRUIT IO
+// =============================================================
+
+// Today's class uses: new AdafruitIO(username, key) and IO.getData().
+let IO = null;
+let firstData = true;
+let lastShootCount = 0;
+let lastJumpCount = 0;
+let updateTimer = null;
+
+function updateControlData() {
+    byId("aimData").textContent = aim;
+    byId("powerData").textContent = power;
+    byId("moveData").textContent = move;
+    byId("angleData").textContent = angle;
+
+    let target = getShotTarget(aim, power);
+    let status = "ON TARGET";
+
+    if (target.x < 175 || target.x > 575) {
+        status = "WIDE";
+    } else if (target.y < 65) {
+        status = "OVER THE BAR";
+    } else if (target.y > 225) {
+        status = "TOO LOW";
+    }
+
+    byId("targetData").textContent = status;
 }
 
-
-// ============================================================================
-// ======================= PART 4 / 4 : ARDUINO & BUTTONS ========================
-// ============================================================================
-// Read Arduino serial data and connect the on-screen buttons.
-
-// --- Arduino connection ---
-
-// Expected data line: AIM,POWER,MOVE,ANGLE,SHOOT,JUMP
-// Example: 90,50,50,0,0,0
-// A four-value line is also accepted, but physical buttons need six values.
-let serialPort = null;
-let serialReader = null;
-let lastShootButton = 0;
-let lastJumpButton = 0;
-
-function readArduinoLine(line) {
-    const data = line.trim().split(',').map(Number);
-
-    if (data.length !== 4 && data.length !== 6) {
-        return;
-    }
-    const hasInvalidNumber = data.some(function (number) {
-        return !Number.isFinite(number);
-    });
-
-    if (hasInvalidNumber) {
-        return;
-    }
-
-    const [aim, power, move, angle] = data;
-
-    const invalidAim = aim < 0 || aim > 180;
-    const invalidPower = power < 0 || power > 100;
-    const invalidMove = move < 0 || move > 100;
-    const invalidAngle = angle < -90 || angle > 90;
-
-    if (invalidAim || invalidPower || invalidMove || invalidAngle) {
-        return;
-    }
-
-    get('aim').value = aim;
-    get('power').value = power;
-    get('move').value = move;
-    get('angle').value = angle;
-    updateControls();
-
-    get('serialData').textContent = 'Data: ' + data.join(',');
-    get('connectionStatus').textContent = 'Arduino connected · Receiving data';
-
-    if (data.length === 6) {
-        const shootButton = data[4];
-        const jumpButton = data[5];
-
-        // Only react when a button changes from 0 to 1.
-        if (shootButton === 1 && lastShootButton === 0) {
-            shoot();
+function readAdafruit() {
+    IO.getData("penalty-controls", function (response) {
+        if (!Array.isArray(response.json) || response.json.length === 0) {
+            byId("connectionStatus").textContent = "No data in penalty-controls";
+            return;
         }
 
-        if (jumpButton === 1 && lastJumpButton === 0) {
+        // One feed value contains: aim,power,move,angle,shootCount,jumpCount
+        let data = response.json[0].value.split(",").map(Number);
+
+        if (data.length !== 6 || data.some(Number.isNaN)) {
+            byId("connectionStatus").textContent = "Invalid feed data";
+            return;
+        }
+
+        aim = data[0];
+        power = data[1];
+        move = data[2];
+        angle = data[3];
+        updateControlData();
+        byId("connectionStatus").textContent = "Connected - data received";
+
+        // Establish a baseline on the first reading.
+        if (firstData) {
+            lastShootCount = data[4];
+            lastJumpCount = data[5];
+            firstData = false;
+            return;
+        }
+
+        // Handle ESP32 restarts (its button counters return to zero).
+        if (data[4] < lastShootCount) lastShootCount = data[4];
+        if (data[5] < lastJumpCount) lastJumpCount = data[5];
+
+        // Process Jump first if both buttons changed between readings.
+        if (data[5] > lastJumpCount) {
             jump();
         }
 
-        lastShootButton = shootButton;
-        lastJumpButton = jumpButton;
-    }
+        if (data[4] > lastShootCount) {
+            shoot();
+        }
+
+        lastShootCount = data[4];
+        lastJumpCount = data[5];
+    });
 }
 
-async function connectArduino() {
-    if (serialPort) {
-        if (serialReader) {
-            await serialReader.cancel();
-        }
+byId("connectButton").addEventListener("click", function () {
+    let name = byId("userName").value.trim();
+    let key = byId("apiKey").value.trim();
+
+    if (!name || !key) {
+        byId("connectionStatus").textContent = "Enter username and AIO key";
         return;
     }
 
-    if (!('serial' in navigator)) {
-        get('connectionStatus').textContent = 'Use Chrome or Edge with Live Server for Arduino.';
+    if (typeof AdafruitIO === "undefined") {
+        byId("connectionStatus").textContent = "Adafruit IO library did not load";
         return;
     }
 
-    let port = null;
+    IO = new AdafruitIO(name, key, 1);
+    firstData = true;
+    byId("connectionStatus").textContent = "Connecting...";
 
-    try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-        serialPort = port;
-
-        get('connectBtn').textContent = 'Disconnect Arduino';
-        get('connectionStatus').textContent = 'Connected · Waiting for data';
-
-        const decoder = new TextDecoder();
-        let buffer = '';
-        serialReader = port.readable.getReader();
-
-        while (true) {
-            const packet = await serialReader.read();
-            if (packet.done) {
-                break;
-            }
-
-            buffer += decoder.decode(packet.value, { stream: true });
-            const lines = buffer.split(/\r?\n/);
-            buffer = lines.pop();
-
-            lines.forEach(readArduinoLine);
-        }
-    } catch (error) {
-        if (error.name !== 'NotFoundError') {
-            get('connectionStatus').textContent = 'Connection error: ' + error.message;
-        }
-    } finally {
-        if (serialReader) {
-            serialReader.releaseLock();
-            serialReader = null;
-        }
-
-        if (port) {
-            try {
-                await port.close();
-            } catch (error) {
-                // Port already closed.
-            }
-        }
-
-        serialPort = null;
-        get('connectBtn').textContent = 'Connect Arduino';
-        if (!get('connectionStatus').textContent.startsWith('Connection error')) {
-            get('connectionStatus').textContent = 'Not connected · Demo controls available';
-        }
+    if (updateTimer) {
+        clearInterval(updateTimer);
     }
+
+    readAdafruit();
+    updateTimer = setInterval(readAdafruit, 3000);
+});
+
+// The four sliders are only for testing without an ESP32.
+["Aim", "Power", "Move", "Angle"].forEach(function (name) {
+    byId("demo" + name).addEventListener("input", function () {
+        if (name === "Aim") aim = Number(this.value);
+        if (name === "Power") power = Number(this.value);
+        if (name === "Move") move = Number(this.value);
+        if (name === "Angle") angle = Number(this.value);
+        updateControlData();
+    });
+});
+
+byId("demoJump").addEventListener("click", jump);
+byId("demoShoot").addEventListener("click", shoot);
+
+// Move the mouse over the pitch to aim, then click to shoot.
+// On-screen controls work even when there is no ESP32 connected.
+function aimWithMouse(event) {
+    if (shooting || shotCount === 10 || IO !== null) {
+        return;
+    }
+
+    let canvas = byId("pitch").querySelector("canvas");
+
+    if (!canvas) {
+        return;
+    }
+
+    let rectangle = canvas.getBoundingClientRect();
+    let x = (event.clientX - rectangle.left) * 750 / rectangle.width;
+    let y = (event.clientY - rectangle.top) * 430 / rectangle.height;
+
+    aim = Math.round(constrain(map(x, 135, 615, 0, 180), 0, 180));
+    power = Math.round(constrain(map(y, 255, 45, 0, 100), 0, 100));
+
+    byId("demoAim").value = aim;
+    byId("demoPower").value = power;
+    updateControlData();
 }
 
-// --- Start the game and set up buttons ---
-
-setupTeamPicker('A');
-setupTeamPicker('B');
-updateControls();
-updateScore();
-
-get('startBtn').addEventListener('click', startMatch);
-get('resetBtn').addEventListener('click', resetMatch);
-get('shootBtn').addEventListener('click', shoot);
-get('jumpBtn').addEventListener('click', jump);
-get('connectBtn').addEventListener('click', connectArduino);
-get('soundBtn').addEventListener('click', toggleSound);
-get('testSoundBtn').addEventListener('click', playSiu);
-get('exportBtn').addEventListener('click', downloadCSV);
-
-get('homeLeagueBtn').addEventListener('click', function () {
-    showPage('leaguePage');
+byId("pitch").addEventListener("mousemove", aimWithMouse);
+byId("pitch").addEventListener("click", function (event) {
+    aimWithMouse(event);
+    shoot();
 });
 
-get('matchLeagueBtn').addEventListener('click', function () {
-    showPage('leaguePage');
-});
-
-get('standingsResultBtn').addEventListener('click', function () {
-    showPage('leaguePage');
-});
-
-get('backToTeamsBtn').addEventListener('click', function () {
-    showPage('startPage');
-});
-
-get('leagueHomeBtn').addEventListener('click', function () {
-    showPage('startPage');
-});
-
-get('newGameBtn').addEventListener('click', function () {
-    showPage('startPage');
-});
-
-get('clearBtn').addEventListener('click', function () {
-    if (!confirm('Delete all saved match results?')) {
+// Keyboard shortcuts: SPACE = shoot, J = jump.
+document.addEventListener("keydown", function (event) {
+    if (byId("gamePage").classList.contains("hidden")) {
         return;
     }
-    results = [];
-    localStorage.removeItem(saveKey);
-    showLeague();
+
+    // Don't intercept typing in the Adafruit settings.
+    if (event.target.tagName === "INPUT" || event.target.tagName === "SELECT") {
+        return;
+    }
+
+    if (event.code === "Space") {
+        event.preventDefault();
+        shoot();
+    }
+
+    if (event.key.toLowerCase() === "j") {
+        jump();
+    }
 });
 
-['aim', 'power', 'move', 'angle'].forEach(function (id) {
-    get(id).addEventListener('input', updateControls);
-});
+updateControlData();
