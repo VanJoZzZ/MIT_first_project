@@ -1,7 +1,10 @@
 // PENALTY MIND GAMES
-// This file controls the three pages, the match, and the Arduino.
+// One JavaScript file with four clearly separated parts.
 
-// 1. BASIC DATA ------------------------------------------------------
+// ============================================================================
+// ======================= PART 1 / 4 : TEAMS & PAGES ========================
+// ============================================================================
+// Club names, team crests, team selection, and page navigation.
 
 const clubs = {
     'Liverpool': 364,
@@ -21,49 +24,17 @@ const clubs = {
     'Borussia Dortmund': 124
 };
 
-const saveKey = 'penaltyMindGames:standings:v3';
 const clubNames = Object.keys(clubs);
-const shotLimit = 10;
 
 let teamA = 'Liverpool';
 let teamB = 'Arsenal';
-let goals = [0, 0];
-let shots = 0;
-let shooting = false;
-let matchSaved = false;
-let shotVersion = 0;
-let jumpedRecently = false;
-let jumpedDuringShot = false;
-let jumpPosition = 50;
-let jumpAngle = 0;
-let jumpTime = 0;
-let soundEnabled = true;
-let results = [];
-
-// The four values represent the Arduino potentiometers.
-let controls = {
-    aim: 90,
-    power: 50,
-    move: 50,
-    angle: 0
-};
 
 // Short helper: find an HTML element by its id.
 function get(id) {
     return document.querySelector('#' + id);
 }
 
-// Remember previously played matches (if any).
-try {
-    const oldData = JSON.parse(localStorage.getItem(saveKey));
-    if (oldData && Array.isArray(oldData.matches)) {
-        results = oldData.matches;
-    }
-} catch (error) {
-    results = [];
-}
-
-// 2. PAGE NAVIGATION -------------------------------------------------
+// --- Switching between the three pages ---
 
 function showPage(pageId) {
     get('startPage').classList.add('hidden');
@@ -79,7 +50,7 @@ function showPage(pageId) {
     window.scrollTo(0, 0);
 }
 
-// 3. TEAM BADGES AND TEAM SELECTION ---------------------------------
+// --- Club crests and team selection ---
 
 function makeBadge(name) {
     const badge = document.createElement('span');
@@ -201,7 +172,35 @@ function startMatch() {
     }, 1600);
 }
 
-// 4. MATCH CONTROLS --------------------------------------------------
+
+// ============================================================================
+// ======================= PART 2 / 4 : GAME & SOUND ========================
+// ============================================================================
+// Penalty shots, goalkeeper saves, score, animations, and SIUUU sound.
+
+const shotLimit = 10;
+
+let goals = [0, 0];
+let shots = 0;
+let shooting = false;
+let matchSaved = false;
+let shotVersion = 0;
+let jumpedRecently = false;
+let jumpedDuringShot = false;
+let jumpPosition = 50;
+let jumpAngle = 0;
+let jumpTime = 0;
+let soundEnabled = true;
+
+// The four values represent the Arduino potentiometers.
+let controls = {
+    aim: 90,
+    power: 50,
+    move: 50,
+    angle: 0
+};
+
+// --- Match logic ---
 
 function updateControls() {
     controls.aim = Number(get('aim').value);
@@ -394,7 +393,7 @@ function finishShot(shooter, aim, power) {
     }, 550);
 }
 
-// 5. GOAL SOUND ------------------------------------------------------
+// --- Goal celebration sound ---
 
 // You can also replace this URL with a local file: assets/siuuu.mp3
 const siuAudio = new Audio(
@@ -432,7 +431,27 @@ function toggleSound() {
     }
 }
 
-// 6. LEAGUE TABLE ----------------------------------------------------
+
+// ============================================================================
+// ======================= PART 3 / 4 : LEAGUE TABLE ========================
+// ============================================================================
+// Save match results, calculate points, and export the standings.
+
+const saveKey = 'penaltyMindGames:standings:v3';
+
+let results = [];
+
+// Remember previously played matches (if any).
+try {
+    const oldData = JSON.parse(localStorage.getItem(saveKey));
+    if (oldData && Array.isArray(oldData.matches)) {
+        results = oldData.matches;
+    }
+} catch (error) {
+    results = [];
+}
+
+// --- Results and standings ---
 
 function finishMatch() {
     let winner = 'Draw';
@@ -608,7 +627,13 @@ function downloadCSV() {
     URL.revokeObjectURL(link.href);
 }
 
-// 7. ARDUINO CONNECTION ----------------------------------------------
+
+// ============================================================================
+// ======================= PART 4 / 4 : ARDUINO & BUTTONS ========================
+// ============================================================================
+// Read Arduino serial data and connect the on-screen buttons.
+
+// --- Arduino connection ---
 
 // Expected data line: AIM,POWER,MOVE,ANGLE,SHOOT,JUMP
 // Example: 90,50,50,0,0,0
@@ -735,7 +760,7 @@ async function connectArduino() {
     }
 }
 
-// 8. BUTTONS AND STARTUP --------------------------------------------
+// --- Start the game and set up buttons ---
 
 setupTeamPicker('A');
 setupTeamPicker('B');
