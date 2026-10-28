@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penalty Mind Games</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- PAGE 1: CHOOSE TWO TEAMS -->
+    <section id="startPage" class="page">
+        <nav class="topbar container">
+            <div class="logo">⚽ PENALTY <span>MIND GAMES</span></div>
+            <button id="homeLeagueBtn">🏆 League Standings</button>
+        </nav>
+
+        <main class="container">
+            <div class="hero">
+                <div>
+                    <p class="eyebrow">PENALTY LEAGUE · TWO PLAYER CHALLENGE</p>
+                    <h1>
+                        ONE SHOT.
+                        <br>
+                        ONE SAVE.
+                        <br>
+                        <span>YOUR LEGACY.</span>
+                    </h1>
+                    <p class="description">
+                        Pick your clubs, take five penalties each, and try to win.
+                        Play with the on-screen controls or connect your Arduino.
+                    </p>
+                    <p class="pills">
+                        ⚡ 4 KNOBS + 2 BUTTONS
+                        &nbsp; ⚽ 5 SHOTS EACH
+                        &nbsp; 🏆 LEAGUE TABLE
+                    </p>
+                </div>
+                <div class="hero-image">
+                    <div class="hero-goal">
+                        <div class="hero-keeper player">
+                            <div class="head"></div>
+                            <div class="arms"></div>
+                            <div class="shirt"></div>
+                            <div class="legs"></div>
+                        </div>
+                    </div>
+                    <div class="hero-ball">⚽</div>
+                </div>
+            </div>
+
+            <div class="card setup">
+                <p class="eyebrow">01 / MATCH SETUP</p>
+                <h2>CHOOSE YOUR TEAMS</h2>
+
+                <div class="team-columns">
+                    <div class="team-card">
+                        <h3>PLAYER A · TEAM ONE</h3>
+                        <div id="chosenBadgeA" class="large-badge"></div>
+                        <select id="teamA" aria-label="Team A"></select>
+                        <input
+                            id="customA"
+                            class="custom-name hidden"
+                            placeholder="Enter custom club name"
+                            maxlength="28"
+                        >
+                        <div id="badgesA" class="badge-grid"></div>
+                    </div>
+
+                    <div class="vs">VS</div>
+
+                    <div class="team-card">
+                        <h3>PLAYER B · TEAM TWO</h3>
+                        <div id="chosenBadgeB" class="large-badge"></div>
+                        <select id="teamB" aria-label="Team B"></select>
+                        <input
+                            id="customB"
+                            class="custom-name hidden"
+                            placeholder="Enter custom club name"
+                            maxlength="28"
+                        >
+                        <div id="badgesB" class="badge-grid"></div>
+                    </div>
+                </div>
+
+                <button id="startBtn" class="primary">START MATCH →</button>
+                <span id="teamMessage" class="message">Choose two different clubs.</span>
+            </div>
+        </main>
+    </section>
+
+    <!-- PAGE 2: PLAY THE MATCH -->
+    <section id="matchPage" class="page hidden">
+        <nav class="topbar container">
+            <div class="logo">⚽ PENALTY <span>MIND GAMES</span></div>
+            <div class="nav-buttons">
+                <button id="backToTeamsBtn">← Team Selection</button>
+                <button id="matchLeagueBtn">🏆 Standings</button>
+            </div>
+        </nav>
+
+        <main class="container">
+            <div class="match-header card">
+                <div class="score-team">
+                    <div id="matchBadgeA" class="medium-badge"></div>
+                    <strong id="matchNameA">Liverpool</strong>
+                    <div id="scoreA" class="score-number">0</div>
+                </div>
+
+                <div class="match-center">
+                    <p class="eyebrow">PENALTY SHOOTOUT</p>
+                    <strong id="shotCount">SHOT 0 / 10</strong>
+                    <p id="turnText">READY TO SHOOT</p>
+                </div>
+
+                <div class="score-team">
+                    <div id="matchBadgeB" class="medium-badge"></div>
+                    <strong id="matchNameB">Arsenal</strong>
+                    <div id="scoreB" class="score-number">0</div>
+                </div>
+            </div>
+
+            <div class="game-columns">
+                <div>
+                    <div class="card game-card">
+                        <div id="pitch" class="pitch">
+                            <div class="goal">
+                                <div id="keeper" class="keeper player">
+                                    <div class="head"></div>
+                                    <div class="arms"></div>
+                                    <div class="shirt"></div>
+                                    <div class="legs"></div>
+                                </div>
+                            </div>
+                            <div class="penalty-dot"></div>
+                            <div id="ball" class="ball">⚽</div>
+                            <div id="goalEffect" class="goal-effect hidden">SIUUUUUU!</div>
+                            <div id="intro" class="intro hidden">
+                                <h2>THE PLAYERS ARE ARRIVING</h2>
+                                <p>
+                                    <span id="introA">Team A</span>
+                                    &nbsp; VS &nbsp;
+                                    <span id="introB">Team B</span>
+                                </p>
+                                <span>⚽ FIVE PENALTIES EACH · GOOD LUCK!</span>
+                            </div>
+                        </div>
+
+                        <div class="result-line">
+                            <div>
+                                <h2 id="resultTitle">READY FOR KICKOFF</h2>
+                                <p id="resultDetail">Use the controls to aim, then press SHOOT.</p>
+                            </div>
+                            <button id="resetBtn">Reset Match</button>
+                        </div>
+
+                        <p id="shotHistory" class="shot-history">
+                            Five penalties per team.
+                        </p>
+                        <button id="standingsResultBtn" class="primary hidden">
+                            🏆 View League Standings
+                        </button>
+                    </div>
+                </div>
+
+                <aside>
+                    <div class="card controls-card">
+                        <h2>⚽ SHOOTER</h2>
+                        <p class="small">A0: Aim &nbsp; A1: Power &nbsp; D2: Shoot</p>
+
+                        <label for="aim">AIM <strong id="aimValue">90°</strong></label>
+                        <input id="aim" type="range" min="0" max="180" value="90">
+
+                        <label for="power">POWER <strong id="powerValue">50%</strong></label>
+                        <input id="power" type="range" min="0" max="100" value="50">
+
+                        <button id="shootBtn" class="primary full">⚽ SHOOT</button>
+                    </div>
+
+                    <div class="card controls-card">
+                        <h2>🧤 GOALKEEPER</h2>
+                        <p class="small">A2: Move &nbsp; A3: Angle &nbsp; D3: Jump</p>
+
+                        <label for="move">MOVE <strong id="moveValue">50%</strong></label>
+                        <input id="move" type="range" min="0" max="100" value="50">
+
+                        <label for="angle">DIVE ANGLE <strong id="angleValue">0°</strong></label>
+                        <input id="angle" type="range" min="-90" max="90" value="0">
+
+                        <button id="jumpBtn" class="full">🧤 JUMP</button>
+                    </div>
+
+                    <div class="card controls-card">
+                        <h2>🔌 ARDUINO</h2>
+                        <p id="connectionStatus" class="small">
+                            Not connected · Demo controls available
+                        </p>
+                        <button id="connectBtn" class="full">Connect Arduino</button>
+                        <p id="serialData" class="small">Data: --,--,--,--,--,--</p>
+                        <p class="small">Use Chrome or Edge, 115200 baud.</p>
+                        <button id="soundBtn" class="full">🔊 Sound On</button>
+                        <button id="testSoundBtn" class="full">▶ Test SIUUUU!</button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </section>
+
+    <!-- PAGE 3: LEAGUE STANDINGS -->
+    <section id="leaguePage" class="page hidden">
+        <nav class="topbar container">
+            <div class="logo">⚽ PENALTY <span>MIND GAMES</span></div>
+            <button id="leagueHomeBtn">← Team Selection</button>
+        </nav>
+
+        <main class="container league-content">
+            <p class="eyebrow">03 / LEAGUE TABLE</p>
+            <h1>LEAGUE <span>STANDINGS</span></h1>
+            <p class="description">Match results are saved automatically in this browser.</p>
+
+            <div class="league-stats">
+                <div class="card">Clubs <strong id="clubTotal">0</strong></div>
+                <div class="card">Matches <strong id="matchTotal">0</strong></div>
+                <div class="card">Goals <strong id="goalTotal">0</strong></div>
+            </div>
+
+            <div class="table-box">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Club</th>
+                            <th>P</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th>GF</th>
+                            <th>GA</th>
+                            <th>GD</th>
+                            <th>PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leagueRows"></tbody>
+                </table>
+            </div>
+
+            <h2>RECENT MATCHES</h2>
+            <div id="recentMatches" class="recent-matches"></div>
+
+            <div class="bottom-buttons">
+                <button id="exportBtn">Download CSV</button>
+                <button id="clearBtn">Clear Standings</button>
+                <button id="newGameBtn" class="primary">New Match →</button>
+            </div>
+        </main>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
